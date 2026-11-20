@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PDFKit Local — Visual Client-Side PDF Toolkit</title>
+  <title>PDFKit Local — Fast Batch & Drag-and-Drop PDF Toolkit</title>
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -41,7 +41,7 @@
 
     .container {
       width: 100%;
-      max-width: 900px;
+      max-width: 920px;
     }
 
     header {
@@ -167,7 +167,7 @@
     .preview-grid {
       margin-top: 1.25rem;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
       gap: 0.85rem;
     }
 
@@ -179,16 +179,33 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: border-color 0.2s;
+      transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+      user-select: none;
     }
 
-    .preview-card:hover {
-      border-color: #475569;
+    .preview-card.sortable {
+      cursor: grab;
+    }
+
+    .preview-card.sortable:active {
+      cursor: grabbing;
+    }
+
+    .preview-card.dragging {
+      opacity: 0.45;
+      transform: scale(0.97);
+      border-color: var(--accent);
+    }
+
+    .preview-card.drag-target {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35);
+      transform: translateY(-2px);
     }
 
     .thumb-box {
       width: 100%;
-      height: 195px;
+      height: 185px;
       background: #090d16;
       border-radius: 6px;
       overflow: hidden;
@@ -203,20 +220,29 @@
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
+      pointer-events: none;
       transition: transform 0.2s ease;
+    }
+
+    .thumb-placeholder {
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 0.5rem;
+      text-align: center;
     }
 
     .thumb-badge {
       position: absolute;
       top: 6px;
       left: 6px;
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.88);
       color: var(--accent);
       font-size: 0.7rem;
       font-weight: 700;
       padding: 0.15rem 0.45rem;
       border-radius: 4px;
       border: 1px solid var(--border);
+      z-index: 2;
     }
 
     .card-name {
@@ -403,8 +429,8 @@
   <div class="container">
     <header>
       <h1>PDFKit <span>Local</span></h1>
-      <p>Toolkit PDF dengan visual preview & pemrosesan batch langsung di browser.</p>
-      <div class="badge">100% Client-Side • Visual Preview • Multi-File Batch</div>
+      <p>Pilih banyak file sekaligus (Ctrl+A lalu Enter) dan geser kartu langsung untuk mengatur urutan.</p>
+      <div class="badge">100% Client-Side • Fast Batch • Drag-and-Drop Reorder</div>
     </header>
 
     <div class="tabs">
@@ -419,10 +445,10 @@
     <!-- 1. MERGE PDF -->
     <div id="panel-merge" class="panel active">
       <div class="panel-title">Merge PDF</div>
-      <div class="panel-desc">Lihat preview halaman depan tiap file dan atur urutannya sebelum digabung.</div>
+      <div class="panel-desc">Pilih banyak PDF sekaligus (Ctrl+A + Enter), lalu klik dan geser kartu ke kiri/kanan untuk mengubah urutan.</div>
       <div id="merge-dropzone" class="dropzone">
-        <p><strong>Klik atau tarik beberapa file PDF ke sini</strong></p>
-        <small>Bisa pilih banyak file sekaligus</small>
+        <p><strong>Klik atau tarik banyak file PDF ke sini</strong></p>
+        <small>Mendukung seleksi banyak file sekaligus (Ctrl+A lalu Enter)</small>
         <input type="file" id="merge-input" accept="application/pdf" multiple hidden />
       </div>
       <div id="merge-list" class="preview-grid"></div>
@@ -461,7 +487,7 @@
     <!-- 3. ROTATE PDF (BATCH) -->
     <div id="panel-rotate" class="panel">
       <div class="panel-title">Rotate PDF (Batch Multi-File)</div>
-      <div class="panel-desc">Putar satu atau banyak file PDF sekaligus dengan preview rotasi langsung.</div>
+      <div class="panel-desc">Pilih banyak PDF sekaligus (Ctrl+A + Enter) untuk diputar bersamaan.</div>
       <div id="rotate-dropzone" class="dropzone">
         <p><strong>Klik atau tarik satu / banyak file PDF ke sini</strong></p>
         <small>Jika lebih dari 1 file, hasil otomatis dibungkus ke dalam .ZIP</small>
@@ -483,10 +509,10 @@
     <!-- 4. JPG/PNG TO PDF -->
     <div id="panel-img2pdf" class="panel">
       <div class="panel-title">JPG / PNG to PDF</div>
-      <div class="panel-desc">Lihat preview setiap gambar dan atur posisinya sebelum dikonversi ke PDF.</div>
+      <div class="panel-desc">Pilih banyak gambar sekaligus (Ctrl+A + Enter) lalu geser kartu langsung untuk menyusun urutan halaman.</div>
       <div id="img2pdf-dropzone" class="dropzone">
         <p><strong>Klik atau tarik file gambar (JPG / PNG) ke sini</strong></p>
-        <small>Bisa pilih banyak gambar sekaligus</small>
+        <small>Bisa pilih banyak gambar sekaligus dan geser urutannya</small>
         <input type="file" id="img2pdf-input" accept="image/jpeg,image/png" multiple hidden />
       </div>
       <div id="img2pdf-list" class="preview-grid"></div>
@@ -497,7 +523,7 @@
     <!-- 5. PDF TO JPG (BATCH) -->
     <div id="panel-pdf2jpg" class="panel">
       <div class="panel-title">PDF to JPG (Batch Multi-File)</div>
-      <div class="panel-desc">Ubah semua halaman dari satu atau banyak PDF menjadi gambar JPG dalam arsip ZIP.</div>
+      <div class="panel-desc">Pilih banyak PDF sekaligus (Ctrl+A + Enter) untuk dikonversi ke JPG dalam arsip ZIP.</div>
       <div id="pdf2jpg-dropzone" class="dropzone">
         <p><strong>Klik atau tarik satu / banyak file PDF ke sini</strong></p>
         <small>Setiap PDF dibuatkan folder terpisah di dalam ZIP jika lebih dari 1 file</small>
@@ -519,7 +545,7 @@
     <!-- 6. COMPRESS PDF (BATCH) -->
     <div id="panel-compress" class="panel">
       <div class="panel-title">Compress PDF (Batch Multi-File)</div>
-      <div class="panel-desc">Perkecil ukuran satu atau banyak file PDF sekaligus langsung di browser.</div>
+      <div class="panel-desc">Pilih banyak PDF sekaligus (Ctrl+A + Enter) untuk dikompresi sekaligus.</div>
       <div id="compress-dropzone" class="dropzone">
         <p><strong>Klik atau tarik satu / banyak file PDF ke sini</strong></p>
         <small>Jika lebih dari 1 file, seluruh hasil kompresi otomatis digabung ke .ZIP</small>
@@ -539,7 +565,7 @@
     </div>
 
     <div class="note-box">
-      <strong>Catatan Teknis:</strong> Semua preview thumbnail, penggabungan, rotasi, dan kompresi berjalan 100% di memori browser lokal tanpa pengiriman data ke server luar.
+      <strong>Catatan Teknis:</strong> Semua preview thumbnail, drag-and-drop urutan, penggabungan, rotasi, dan kompresi berjalan 100% di memori browser lokal tanpa pengiriman data ke server luar.
     </div>
   </div>
 
@@ -594,16 +620,58 @@
       dropzoneEl.addEventListener('drop', (e) => {
         e.preventDefault();
         dropzoneEl.classList.remove('dragover');
-        if (e.dataTransfer.files.length) onFiles(e.dataTransfer.files);
+        if (e.dataTransfer.files.length) onFiles(Array.from(e.dataTransfer.files));
       });
       inputEl.addEventListener('change', (e) => {
-        if (e.target.files.length) onFiles(e.target.files);
+        if (e.target.files.length) onFiles(Array.from(e.target.files));
         inputEl.value = '';
       });
     }
 
-    // Render thumbnail halaman 1 PDF menjadi DataURL
-    async function generatePdfThumbnail(arrayBuffer, pageNumber = 1, targetWidth = 260) {
+    // Helper Drag-and-Drop geser kartu antar indeks array
+    function attachCardDragSort(cardEl, index, arrayRef, onReorder) {
+      cardEl.draggable = true;
+      cardEl.classList.add('sortable');
+
+      cardEl.addEventListener('dragstart', (e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(index));
+        cardEl.classList.add('dragging');
+      });
+
+      cardEl.addEventListener('dragend', () => {
+        cardEl.classList.remove('dragging');
+        document.querySelectorAll('.preview-card.drag-target').forEach((el) => {
+          el.classList.remove('drag-target');
+        });
+      });
+
+      cardEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (!cardEl.classList.contains('dragging')) {
+          cardEl.classList.add('drag-target');
+        }
+      });
+
+      cardEl.addEventListener('dragleave', () => {
+        cardEl.classList.remove('drag-target');
+      });
+
+      cardEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        cardEl.classList.remove('drag-target');
+        const fromIndex = Number(e.dataTransfer.getData('text/plain'));
+        const toIndex = index;
+        if (Number.isNaN(fromIndex) || fromIndex === toIndex) return;
+
+        const [movedItem] = arrayRef.splice(fromIndex, 1);
+        arrayRef.splice(toIndex, 0, movedItem);
+        onReorder();
+      });
+    }
+
+    async function generatePdfThumbnail(arrayBuffer, pageNumber = 1, targetWidth = 240) {
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
       const page = await pdf.getPage(pageNumber);
       const unscaledViewport = page.getViewport({ scale: 1 });
@@ -619,12 +687,12 @@
 
       await page.render({ canvasContext: ctx, viewport }).promise;
       return {
-        thumbUrl: canvas.toDataURL('image/jpeg', 0.8),
+        thumbUrl: canvas.toDataURL('image/jpeg', 0.78),
         pageCount: pdf.numPages,
       };
     }
 
-    // ================= 1. MERGE PDF =================
+    // ================= 1. MERGE PDF (FAST BATCH + DRAG SORT) =================
     let mergeFiles = [];
     const mergeList = document.getElementById('merge-list');
     const mergeBtn = document.getElementById('merge-btn');
@@ -634,18 +702,41 @@
       document.getElementById('merge-dropzone'),
       document.getElementById('merge-input'),
       async (fileList) => {
-        setStatus(mergeStatus, 'Membuat preview PDF...');
-        for (const file of fileList) {
-          if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) continue;
-          try {
-            const bytes = await file.arrayBuffer();
-            await PDFDocument.load(bytes);
-            const { thumbUrl, pageCount } = await generatePdfThumbnail(bytes, 1);
-            mergeFiles.push({ name: file.name, bytes, pageCount, thumbUrl, size: file.size });
-          } catch {
-            setStatus(mergeStatus, `Gagal membaca "${file.name}" (pastikan tidak terenkripsi).`, 'error');
-          }
-        }
+        const pdfFiles = fileList.filter(
+          (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+        );
+        if (!pdfFiles.length) return;
+
+        // 1. Baca semua file secara paralel dan tampilkan kartu langsung agar terasa instan
+        const startIdx = mergeFiles.length;
+        const rawItems = await Promise.all(
+          pdfFiles.map(async (file) => ({
+            name: file.name,
+            bytes: await file.arrayBuffer(),
+            size: file.size,
+            pageCount: null,
+            thumbUrl: null,
+            error: false,
+          }))
+        );
+        mergeFiles.push(...rawItems);
+        renderMergeList();
+        setStatus(mergeStatus, `Memuat preview ${pdfFiles.length} file PDF...`);
+
+        // 2. Render thumbnail tiap file secara paralel
+        await Promise.all(
+          pdfFiles.map(async (_, idx) => {
+            const target = mergeFiles[startIdx + idx];
+            try {
+              const { thumbUrl, pageCount } = await generatePdfThumbnail(target.bytes, 1);
+              target.thumbUrl = thumbUrl;
+              target.pageCount = pageCount;
+            } catch {
+              target.error = true;
+            }
+          })
+        );
+
         renderMergeList();
         setStatus(mergeStatus, '');
       }
@@ -656,14 +747,18 @@
       mergeFiles.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'preview-card';
+        const visualContent = item.thumbUrl
+          ? `<img src="${item.thumbUrl}" alt="${item.name}" />`
+          : `<div class="thumb-placeholder">${item.error ? 'Gagal baca PDF' : 'Merender preview...'}</div>`;
+
         card.innerHTML = `
           <div>
             <div class="thumb-box">
               <span class="thumb-badge">#${index + 1}</span>
-              <img src="${item.thumbUrl}" alt="${item.name}" />
+              ${visualContent}
             </div>
             <div class="card-name" title="${item.name}">${item.name}</div>
-            <div class="card-meta">${item.pageCount} hal • ${formatBytes(item.size)}</div>
+            <div class="card-meta">${item.pageCount ? `${item.pageCount} hal • ` : ''}${formatBytes(item.size)}</div>
           </div>
           <div class="card-actions">
             <button class="icon-btn" onclick="moveMergeFile(${index}, -1)" ${index === 0 ? 'disabled' : ''}>◀</button>
@@ -671,6 +766,8 @@
             <button class="icon-btn danger" onclick="removeMergeFile(${index})">Hapus</button>
           </div>
         `;
+
+        attachCardDragSort(card, index, mergeFiles, renderMergeList);
         mergeList.appendChild(card);
       });
       mergeBtn.disabled = mergeFiles.length < 2;
@@ -702,7 +799,7 @@
         downloadBlob(new Blob([await mergedPdf.save()], { type: 'application/pdf' }), 'merged.pdf');
         setStatus(mergeStatus, `Berhasil menggabungkan ${mergeFiles.length} file!`, 'success');
       } catch {
-        setStatus(mergeStatus, 'Terjadi kesalahan saat menggabungkan PDF.', 'error');
+        setStatus(mergeStatus, 'Terjadi kesalahan saat menggabungkan PDF (pastikan PDF tidak terenkripsi).', 'error');
       } finally {
         mergeBtn.disabled = mergeFiles.length < 2;
       }
@@ -720,8 +817,7 @@
 
     document.querySelectorAll('input[name="split-mode"]').forEach((radio) => {
       radio.addEventListener('change', (e) => {
-        const isRange = e.target.value === 'range';
-        splitRangeInput.disabled = !isRange;
+        splitRangeInput.disabled = e.target.value !== 'range';
       });
     });
 
@@ -737,36 +833,38 @@
         setStatus(splitStatus, 'Merender preview semua halaman...');
         try {
           const bytes = await file.arrayBuffer();
-          await PDFDocument.load(bytes);
           const pdf = await pdfjsLib.getDocument({ data: bytes.slice(0) }).promise;
           splitFile = { name: file.name, bytes, pageCount: pdf.numPages, size: file.size };
           selectedSplitPages.clear();
           splitRangeInput.value = '';
-
           splitPagesGrid.innerHTML = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const { thumbUrl } = await generatePdfThumbnail(bytes, i, 150);
-            if (i === 1) {
-              splitFileHeader.innerHTML = `
-                <div class="preview-card">
-                  <div>
-                    <div class="thumb-box"><img src="${thumbUrl}" alt="${file.name}" /></div>
-                    <div class="card-name" title="${file.name}">${file.name}</div>
-                    <div class="card-meta">${pdf.numPages} halaman • ${formatBytes(file.size)}</div>
-                  </div>
-                  <div class="card-actions">
-                    <button class="icon-btn danger" onclick="clearSplitFile()">Hapus File</button>
-                  </div>
-                </div>
-              `;
-            }
+
+          const pageNums = Array.from({ length: pdf.numPages }, (_, i) => i + 1);
+          const thumbs = await Promise.all(
+            pageNums.map((p) => generatePdfThumbnail(bytes, p, 150))
+          );
+
+          splitFileHeader.innerHTML = `
+            <div class="preview-card">
+              <div>
+                <div class="thumb-box"><img src="${thumbs[0].thumbUrl}" alt="${file.name}" /></div>
+                <div class="card-name" title="${file.name}">${file.name}</div>
+                <div class="card-meta">${pdf.numPages} halaman • ${formatBytes(file.size)}</div>
+              </div>
+              <div class="card-actions">
+                <button class="icon-btn danger" onclick="clearSplitFile()">Hapus File</button>
+              </div>
+            </div>
+          `;
+
+          thumbs.forEach(({ thumbUrl }, idx) => {
+            const pageNum = idx + 1;
             const pageDiv = document.createElement('div');
             pageDiv.className = 'split-page-item';
-            pageDiv.dataset.page = i;
-            pageDiv.innerHTML = `<img src="${thumbUrl}" alt="Hal ${i}" /><span>Halaman ${i}</span>`;
-            pageDiv.addEventListener('click', () => toggleSplitPage(i, pageDiv));
+            pageDiv.innerHTML = `<img src="${thumbUrl}" alt="Hal ${pageNum}" /><span>Halaman ${pageNum}</span>`;
+            pageDiv.addEventListener('click', () => toggleSplitPage(pageNum, pageDiv));
             splitPagesGrid.appendChild(pageDiv);
-          }
+          });
 
           splitControls.style.display = 'flex';
           splitBtn.disabled = false;
@@ -778,9 +876,7 @@
     );
 
     function toggleSplitPage(pageNum, el) {
-      // Otomatis pindah ke mode range jika user klik halaman langsung
-      const rangeRadio = document.querySelector('input[name="split-mode"][value="range"]');
-      rangeRadio.checked = true;
+      document.querySelector('input[name="split-mode"][value="range"]').checked = true;
       splitRangeInput.disabled = false;
 
       if (selectedSplitPages.has(pageNum)) {
@@ -790,9 +886,7 @@
         selectedSplitPages.add(pageNum);
         el.classList.add('selected');
       }
-      splitRangeInput.value = Array.from(selectedSplitPages)
-        .sort((a, b) => a - b)
-        .join(', ');
+      splitRangeInput.value = Array.from(selectedSplitPages).sort((a, b) => a - b).join(', ');
     }
 
     window.clearSplitFile = () => {
@@ -862,7 +956,7 @@
       }
     });
 
-    // ================= 3. ROTATE PDF (BATCH) =================
+    // ================= 3. ROTATE PDF (FAST BATCH) =================
     let rotateFiles = [];
     const rotateList = document.getElementById('rotate-list');
     const rotateControls = document.getElementById('rotate-controls');
@@ -876,18 +970,35 @@
       document.getElementById('rotate-dropzone'),
       document.getElementById('rotate-input'),
       async (fileList) => {
-        setStatus(rotateStatus, 'Membuat preview PDF...');
-        for (const file of fileList) {
-          if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) continue;
-          try {
-            const bytes = await file.arrayBuffer();
-            await PDFDocument.load(bytes);
-            const { thumbUrl, pageCount } = await generatePdfThumbnail(bytes, 1);
-            rotateFiles.push({ name: file.name, bytes, pageCount, thumbUrl });
-          } catch {
-            setStatus(rotateStatus, `Gagal membaca "${file.name}".`, 'error');
-          }
-        }
+        const pdfFiles = fileList.filter(
+          (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+        );
+        if (!pdfFiles.length) return;
+
+        const startIdx = rotateFiles.length;
+        const rawItems = await Promise.all(
+          pdfFiles.map(async (file) => ({
+            name: file.name,
+            bytes: await file.arrayBuffer(),
+            pageCount: null,
+            thumbUrl: null,
+          }))
+        );
+        rotateFiles.push(...rawItems);
+        renderRotateList();
+        setStatus(rotateStatus, `Memuat preview ${pdfFiles.length} file PDF...`);
+
+        await Promise.all(
+          pdfFiles.map(async (_, idx) => {
+            const target = rotateFiles[startIdx + idx];
+            try {
+              const { thumbUrl, pageCount } = await generatePdfThumbnail(target.bytes, 1);
+              target.thumbUrl = thumbUrl;
+              target.pageCount = pageCount;
+            } catch {}
+          })
+        );
+
         renderRotateList();
         setStatus(rotateStatus, '');
       }
@@ -899,14 +1010,18 @@
       rotateFiles.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'preview-card';
+        const visualContent = item.thumbUrl
+          ? `<img src="${item.thumbUrl}" style="transform: rotate(${angle}deg);" alt="${item.name}" />`
+          : `<div class="thumb-placeholder">Merender preview...</div>`;
+
         card.innerHTML = `
           <div>
             <div class="thumb-box">
               <span class="thumb-badge">${angle}°</span>
-              <img src="${item.thumbUrl}" style="transform: rotate(${angle}deg);" alt="${item.name}" />
+              ${visualContent}
             </div>
             <div class="card-name" title="${item.name}">${item.name}</div>
-            <div class="card-meta">${item.pageCount} halaman</div>
+            <div class="card-meta">${item.pageCount ? `${item.pageCount} halaman` : 'Memuat...'}</div>
           </div>
           <div class="card-actions">
             <button class="icon-btn danger" onclick="removeRotateFile(${index})">Hapus</button>
@@ -955,7 +1070,7 @@
       }
     });
 
-    // ================= 4. JPG/PNG TO PDF =================
+    // ================= 4. JPG/PNG TO PDF (FAST BATCH + DRAG SORT) =================
     let imageFiles = [];
     const img2pdfList = document.getElementById('img2pdf-list');
     const img2pdfBtn = document.getElementById('img2pdf-btn');
@@ -965,12 +1080,19 @@
       document.getElementById('img2pdf-dropzone'),
       document.getElementById('img2pdf-input'),
       async (fileList) => {
-        for (const file of fileList) {
-          if (!['image/jpeg', 'image/png'].includes(file.type)) continue;
-          const bytes = await file.arrayBuffer();
-          const previewUrl = URL.createObjectURL(file);
-          imageFiles.push({ name: file.name, type: file.type, bytes, size: file.size, previewUrl });
-        }
+        const imgs = fileList.filter((f) => ['image/jpeg', 'image/png'].includes(f.type));
+        if (!imgs.length) return;
+
+        const loaded = await Promise.all(
+          imgs.map(async (file) => ({
+            name: file.name,
+            type: file.type,
+            bytes: await file.arrayBuffer(),
+            size: file.size,
+            previewUrl: URL.createObjectURL(file),
+          }))
+        );
+        imageFiles.push(...loaded);
         renderImg2PdfList();
         setStatus(img2pdfStatus, '');
       }
@@ -996,6 +1118,7 @@
             <button class="icon-btn danger" onclick="removeImgFile(${index})">Hapus</button>
           </div>
         `;
+        attachCardDragSort(card, index, imageFiles, renderImg2PdfList);
         img2pdfList.appendChild(card);
       });
       img2pdfBtn.disabled = imageFiles.length === 0;
@@ -1037,7 +1160,7 @@
       }
     });
 
-    // ================= 5. PDF TO JPG (BATCH) =================
+    // ================= 5. PDF TO JPG (FAST BATCH) =================
     let pdf2jpgFiles = [];
     const pdf2jpgList = document.getElementById('pdf2jpg-list');
     const pdf2jpgControls = document.getElementById('pdf2jpg-controls');
@@ -1048,17 +1171,35 @@
       document.getElementById('pdf2jpg-dropzone'),
       document.getElementById('pdf2jpg-input'),
       async (fileList) => {
-        setStatus(pdf2jpgStatus, 'Membuat preview PDF...');
-        for (const file of fileList) {
-          if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) continue;
-          try {
-            const bytes = await file.arrayBuffer();
-            const { thumbUrl, pageCount } = await generatePdfThumbnail(bytes, 1);
-            pdf2jpgFiles.push({ name: file.name, bytes, pageCount, thumbUrl });
-          } catch {
-            setStatus(pdf2jpgStatus, `Gagal membaca "${file.name}".`, 'error');
-          }
-        }
+        const pdfFiles = fileList.filter(
+          (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+        );
+        if (!pdfFiles.length) return;
+
+        const startIdx = pdf2jpgFiles.length;
+        const rawItems = await Promise.all(
+          pdfFiles.map(async (file) => ({
+            name: file.name,
+            bytes: await file.arrayBuffer(),
+            pageCount: null,
+            thumbUrl: null,
+          }))
+        );
+        pdf2jpgFiles.push(...rawItems);
+        renderPdf2JpgList();
+        setStatus(pdf2jpgStatus, `Memuat preview ${pdfFiles.length} file PDF...`);
+
+        await Promise.all(
+          pdfFiles.map(async (_, idx) => {
+            const target = pdf2jpgFiles[startIdx + idx];
+            try {
+              const { thumbUrl, pageCount } = await generatePdfThumbnail(target.bytes, 1);
+              target.thumbUrl = thumbUrl;
+              target.pageCount = pageCount;
+            } catch {}
+          })
+        );
+
         renderPdf2JpgList();
         setStatus(pdf2jpgStatus, '');
       }
@@ -1069,11 +1210,15 @@
       pdf2jpgFiles.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'preview-card';
+        const visualContent = item.thumbUrl
+          ? `<img src="${item.thumbUrl}" alt="${item.name}" />`
+          : `<div class="thumb-placeholder">Merender preview...</div>`;
+
         card.innerHTML = `
           <div>
-            <div class="thumb-box"><img src="${item.thumbUrl}" alt="${item.name}" /></div>
+            <div class="thumb-box">${visualContent}</div>
             <div class="card-name" title="${item.name}">${item.name}</div>
-            <div class="card-meta">${item.pageCount} halaman</div>
+            <div class="card-meta">${item.pageCount ? `${item.pageCount} halaman` : 'Memuat...'}</div>
           </div>
           <div class="card-actions">
             <button class="icon-btn danger" onclick="removePdf2JpgFile(${index})">Hapus</button>
@@ -1133,7 +1278,7 @@
       }
     });
 
-    // ================= 6. COMPRESS PDF (BATCH) =================
+    // ================= 6. COMPRESS PDF (FAST BATCH) =================
     let compressFiles = [];
     const compressList = document.getElementById('compress-list');
     const compressControls = document.getElementById('compress-controls');
@@ -1144,17 +1289,36 @@
       document.getElementById('compress-dropzone'),
       document.getElementById('compress-input'),
       async (fileList) => {
-        setStatus(compressStatus, 'Membuat preview PDF...');
-        for (const file of fileList) {
-          if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) continue;
-          try {
-            const bytes = await file.arrayBuffer();
-            const { thumbUrl, pageCount } = await generatePdfThumbnail(bytes, 1);
-            compressFiles.push({ name: file.name, bytes, size: file.size, pageCount, thumbUrl });
-          } catch {
-            setStatus(compressStatus, `Gagal membaca "${file.name}".`, 'error');
-          }
-        }
+        const pdfFiles = fileList.filter(
+          (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+        );
+        if (!pdfFiles.length) return;
+
+        const startIdx = compressFiles.length;
+        const rawItems = await Promise.all(
+          pdfFiles.map(async (file) => ({
+            name: file.name,
+            bytes: await file.arrayBuffer(),
+            size: file.size,
+            pageCount: null,
+            thumbUrl: null,
+          }))
+        );
+        compressFiles.push(...rawItems);
+        renderCompressList();
+        setStatus(compressStatus, `Memuat preview ${pdfFiles.length} file PDF...`);
+
+        await Promise.all(
+          pdfFiles.map(async (_, idx) => {
+            const target = compressFiles[startIdx + idx];
+            try {
+              const { thumbUrl, pageCount } = await generatePdfThumbnail(target.bytes, 1);
+              target.thumbUrl = thumbUrl;
+              target.pageCount = pageCount;
+            } catch {}
+          })
+        );
+
         renderCompressList();
         setStatus(compressStatus, '');
       }
@@ -1165,11 +1329,15 @@
       compressFiles.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'preview-card';
+        const visualContent = item.thumbUrl
+          ? `<img src="${item.thumbUrl}" alt="${item.name}" />`
+          : `<div class="thumb-placeholder">Merender preview...</div>`;
+
         card.innerHTML = `
           <div>
-            <div class="thumb-box"><img src="${item.thumbUrl}" alt="${item.name}" /></div>
+            <div class="thumb-box">${visualContent}</div>
             <div class="card-name" title="${item.name}">${item.name}</div>
-            <div class="card-meta">${formatBytes(item.size)} • ${item.pageCount} hal</div>
+            <div class="card-meta">${formatBytes(item.size)}${item.pageCount ? ` • ${item.pageCount} hal` : ''}</div>
           </div>
           <div class="card-actions">
             <button class="icon-btn danger" onclick="removeCompressFile(${index})">Hapus</button>
