@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PDFKit Local — Fast Batch & Drag-and-Drop PDF Toolkit</title>
+  <title>PDFKit Local — Auto-Clean Client-Side PDF Toolkit</title>
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -429,8 +429,8 @@
   <div class="container">
     <header>
       <h1>PDFKit <span>Local</span></h1>
-      <p>Pilih banyak file sekaligus (Ctrl+A lalu Enter) dan geser kartu langsung untuk mengatur urutan.</p>
-      <div class="badge">100% Client-Side • Fast Batch • Drag-and-Drop Reorder</div>
+      <p>Pilih banyak file sekaligus (Ctrl+A + Enter), geser urutan kartu, dan memori otomatis dibersihkan setelah selesai.</p>
+      <div class="badge">100% Client-Side • Visual Preview • Auto-Clear Memori</div>
     </header>
 
     <div class="tabs">
@@ -445,7 +445,7 @@
     <!-- 1. MERGE PDF -->
     <div id="panel-merge" class="panel active">
       <div class="panel-title">Merge PDF</div>
-      <div class="panel-desc">Pilih banyak PDF sekaligus (Ctrl+A + Enter), lalu klik dan geser kartu ke kiri/kanan untuk mengubah urutan.</div>
+      <div class="panel-desc">Pilih banyak PDF sekaligus (Ctrl+A + Enter), geser kartu ke kiri/kanan untuk mengatur urutan, lalu gabungkan.</div>
       <div id="merge-dropzone" class="dropzone">
         <p><strong>Klik atau tarik banyak file PDF ke sini</strong></p>
         <small>Mendukung seleksi banyak file sekaligus (Ctrl+A lalu Enter)</small>
@@ -565,7 +565,7 @@
     </div>
 
     <div class="note-box">
-      <strong>Catatan Teknis:</strong> Semua preview thumbnail, drag-and-drop urutan, penggabungan, rotasi, dan kompresi berjalan 100% di memori browser lokal tanpa pengiriman data ke server luar.
+      <strong>Catatan Privasi & Memori:</strong> Seluruh pemrosesan berjalan 100% di memori browser lokal tanpa upload ke server mana pun. Begitu proses unduhan selesai, data input & preview di memori halaman otomatis dihapus dan di-reset.
     </div>
   </div>
 
@@ -628,7 +628,6 @@
       });
     }
 
-    // Helper Drag-and-Drop geser kartu antar indeks array
     function attachCardDragSort(cardEl, index, arrayRef, onReorder) {
       cardEl.draggable = true;
       cardEl.classList.add('sortable');
@@ -692,7 +691,58 @@
       };
     }
 
-    // ================= 1. MERGE PDF (FAST BATCH + DRAG SORT) =================
+    // --- AUTO-CLEAR FUNCTIONS (MEMBERSIHKAN MEMORI & TAMPILAN SETELAH SELESAI) ---
+    function clearMergeState() {
+      mergeFiles = [];
+      mergeList.innerHTML = '';
+      mergeBtn.disabled = true;
+    }
+
+    function clearSplitState() {
+      splitFile = null;
+      selectedSplitPages.clear();
+      splitRangeInput.value = '';
+      splitRangeInput.disabled = true;
+      document.querySelectorAll('input[name="split-mode"]').forEach((r) => {
+        r.checked = r.value === 'all';
+      });
+      splitFileHeader.innerHTML = '';
+      splitPagesGrid.innerHTML = '';
+      splitControls.style.display = 'none';
+      splitBtn.disabled = true;
+    }
+
+    function clearRotateState() {
+      rotateFiles = [];
+      rotateList.innerHTML = '';
+      rotateControls.style.display = 'none';
+      rotateBtn.disabled = true;
+    }
+
+    function clearImg2PdfState() {
+      imageFiles.forEach((item) => {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      });
+      imageFiles = [];
+      img2pdfList.innerHTML = '';
+      img2pdfBtn.disabled = true;
+    }
+
+    function clearPdf2JpgState() {
+      pdf2jpgFiles = [];
+      pdf2jpgList.innerHTML = '';
+      pdf2jpgControls.style.display = 'none';
+      pdf2jpgBtn.disabled = true;
+    }
+
+    function clearCompressState() {
+      compressFiles = [];
+      compressList.innerHTML = '';
+      compressControls.style.display = 'none';
+      compressBtn.disabled = true;
+    }
+
+    // ================= 1. MERGE PDF =================
     let mergeFiles = [];
     const mergeList = document.getElementById('merge-list');
     const mergeBtn = document.getElementById('merge-btn');
@@ -707,7 +757,6 @@
         );
         if (!pdfFiles.length) return;
 
-        // 1. Baca semua file secara paralel dan tampilkan kartu langsung agar terasa instan
         const startIdx = mergeFiles.length;
         const rawItems = await Promise.all(
           pdfFiles.map(async (file) => ({
@@ -723,10 +772,10 @@
         renderMergeList();
         setStatus(mergeStatus, `Memuat preview ${pdfFiles.length} file PDF...`);
 
-        // 2. Render thumbnail tiap file secara paralel
         await Promise.all(
           pdfFiles.map(async (_, idx) => {
             const target = mergeFiles[startIdx + idx];
+            if (!target) return;
             try {
               const { thumbUrl, pageCount } = await generatePdfThumbnail(target.bytes, 1);
               target.thumbUrl = thumbUrl;
@@ -787,6 +836,7 @@
 
     mergeBtn.addEventListener('click', async () => {
       if (mergeFiles.length < 2) return;
+      const totalCount = mergeFiles.length;
       mergeBtn.disabled = true;
       setStatus(mergeStatus, 'Menggabungkan halaman PDF...');
       try {
@@ -797,15 +847,15 @@
           copiedPages.forEach((page) => mergedPdf.addPage(page));
         }
         downloadBlob(new Blob([await mergedPdf.save()], { type: 'application/pdf' }), 'merged.pdf');
-        setStatus(mergeStatus, `Berhasil menggabungkan ${mergeFiles.length} file!`, 'success');
+        clearMergeState();
+        setStatus(mergeStatus, `Berhasil menggabungkan ${totalCount} file! Memori file otomatis dibersihkan.`, 'success');
       } catch {
-        setStatus(mergeStatus, 'Terjadi kesalahan saat menggabungkan PDF (pastikan PDF tidak terenkripsi).', 'error');
-      } finally {
         mergeBtn.disabled = mergeFiles.length < 2;
+        setStatus(mergeStatus, 'Terjadi kesalahan saat menggabungkan PDF (pastikan PDF tidak terenkripsi).', 'error');
       }
     });
 
-    // ================= 2. SPLIT PDF (VISUAL PAGE PICKER) =================
+    // ================= 2. SPLIT PDF =================
     let splitFile = null;
     let selectedSplitPages = new Set();
     const splitFileHeader = document.getElementById('split-file-header');
@@ -852,7 +902,7 @@
                 <div class="card-meta">${pdf.numPages} halaman • ${formatBytes(file.size)}</div>
               </div>
               <div class="card-actions">
-                <button class="icon-btn danger" onclick="clearSplitFile()">Hapus File</button>
+                <button class="icon-btn danger" onclick="clearSplitState()">Hapus File</button>
               </div>
             </div>
           `;
@@ -889,15 +939,7 @@
       splitRangeInput.value = Array.from(selectedSplitPages).sort((a, b) => a - b).join(', ');
     }
 
-    window.clearSplitFile = () => {
-      splitFile = null;
-      selectedSplitPages.clear();
-      splitFileHeader.innerHTML = '';
-      splitPagesGrid.innerHTML = '';
-      splitControls.style.display = 'none';
-      splitBtn.disabled = true;
-      setStatus(splitStatus, '');
-    };
+    window.clearSplitState = clearSplitState;
 
     function parsePageRanges(input, maxPages) {
       const pages = new Set();
@@ -940,23 +982,24 @@
             zip.file(`page-${i + 1}.pdf`, await newPdf.save());
           }
           downloadBlob(await zip.generateAsync({ type: 'blob' }), 'split-pages.zip');
-          setStatus(splitStatus, `Berhasil memisahkan ${total} halaman ke ZIP!`, 'success');
+          clearSplitState();
+          setStatus(splitStatus, `Berhasil memisahkan ${total} halaman ke ZIP! Memori file otomatis dibersihkan.`, 'success');
         } else {
           const indices = parsePageRanges(splitRangeInput.value, splitFile.pageCount);
           const newPdf = await PDFDocument.create();
           const copiedPages = await newPdf.copyPages(srcPdf, indices);
           copiedPages.forEach((p) => newPdf.addPage(p));
           downloadBlob(new Blob([await newPdf.save()], { type: 'application/pdf' }), 'extracted-pages.pdf');
-          setStatus(splitStatus, `Berhasil mengekstrak ${indices.length} halaman!`, 'success');
+          clearSplitState();
+          setStatus(splitStatus, `Berhasil mengekstrak ${indices.length} halaman! Memori file otomatis dibersihkan.`, 'success');
         }
       } catch (err) {
-        setStatus(splitStatus, err.message || 'Gagal memproses Split PDF.', 'error');
-      } finally {
         splitBtn.disabled = false;
+        setStatus(splitStatus, err.message || 'Gagal memproses Split PDF.', 'error');
       }
     });
 
-    // ================= 3. ROTATE PDF (FAST BATCH) =================
+    // ================= 3. ROTATE PDF (BATCH) =================
     let rotateFiles = [];
     const rotateList = document.getElementById('rotate-list');
     const rotateControls = document.getElementById('rotate-controls');
@@ -991,6 +1034,7 @@
         await Promise.all(
           pdfFiles.map(async (_, idx) => {
             const target = rotateFiles[startIdx + idx];
+            if (!target) return;
             try {
               const { thumbUrl, pageCount } = await generatePdfThumbnail(target.bytes, 1);
               target.thumbUrl = thumbUrl;
@@ -1040,6 +1084,7 @@
 
     rotateBtn.addEventListener('click', async () => {
       if (!rotateFiles.length) return;
+      const totalCount = rotateFiles.length;
       rotateBtn.disabled = true;
       const angle = Number(rotateAngleSelect.value);
       setStatus(rotateStatus, 'Memutar halaman PDF...');
@@ -1062,15 +1107,15 @@
           }
           downloadBlob(await zip.generateAsync({ type: 'blob' }), 'rotated-pdfs.zip');
         }
-        setStatus(rotateStatus, `Berhasil memutar ${rotateFiles.length} file PDF!`, 'success');
+        clearRotateState();
+        setStatus(rotateStatus, `Berhasil memutar ${totalCount} file PDF! Memori file otomatis dibersihkan.`, 'success');
       } catch {
-        setStatus(rotateStatus, 'Gagal memutar PDF.', 'error');
-      } finally {
         rotateBtn.disabled = false;
+        setStatus(rotateStatus, 'Gagal memutar PDF.', 'error');
       }
     });
 
-    // ================= 4. JPG/PNG TO PDF (FAST BATCH + DRAG SORT) =================
+    // ================= 4. JPG/PNG TO PDF =================
     let imageFiles = [];
     const img2pdfList = document.getElementById('img2pdf-list');
     const img2pdfBtn = document.getElementById('img2pdf-btn');
@@ -1139,6 +1184,7 @@
 
     img2pdfBtn.addEventListener('click', async () => {
       if (!imageFiles.length) return;
+      const totalCount = imageFiles.length;
       img2pdfBtn.disabled = true;
       setStatus(img2pdfStatus, 'Membuat dokumen PDF dari gambar...');
       try {
@@ -1152,15 +1198,15 @@
           page.drawImage(embeddedImg, { x: 0, y: 0, width: embeddedImg.width, height: embeddedImg.height });
         }
         downloadBlob(new Blob([await pdfDoc.save()], { type: 'application/pdf' }), 'images-to-pdf.pdf');
-        setStatus(img2pdfStatus, `Berhasil mengonversi ${imageFiles.length} gambar ke PDF!`, 'success');
+        clearImg2PdfState();
+        setStatus(img2pdfStatus, `Berhasil mengonversi ${totalCount} gambar ke PDF! Memori gambar otomatis dibersihkan.`, 'success');
       } catch {
-        setStatus(img2pdfStatus, 'Gagal mengonversi gambar.', 'error');
-      } finally {
         img2pdfBtn.disabled = false;
+        setStatus(img2pdfStatus, 'Gagal mengonversi gambar.', 'error');
       }
     });
 
-    // ================= 5. PDF TO JPG (FAST BATCH) =================
+    // ================= 5. PDF TO JPG (BATCH) =================
     let pdf2jpgFiles = [];
     const pdf2jpgList = document.getElementById('pdf2jpg-list');
     const pdf2jpgControls = document.getElementById('pdf2jpg-controls');
@@ -1192,6 +1238,7 @@
         await Promise.all(
           pdfFiles.map(async (_, idx) => {
             const target = pdf2jpgFiles[startIdx + idx];
+            if (!target) return;
             try {
               const { thumbUrl, pageCount } = await generatePdfThumbnail(target.bytes, 1);
               target.thumbUrl = thumbUrl;
@@ -1237,6 +1284,7 @@
 
     pdf2jpgBtn.addEventListener('click', async () => {
       if (!pdf2jpgFiles.length) return;
+      const totalCount = pdf2jpgFiles.length;
       pdf2jpgBtn.disabled = true;
       const scale = Number(document.getElementById('pdf2jpg-scale').value);
       try {
@@ -1270,15 +1318,15 @@
           ? `${pdf2jpgFiles[0].name.replace(/\.pdf$/i, '')}-images.zip`
           : 'batch-pdf-images.zip';
         downloadBlob(await zip.generateAsync({ type: 'blob' }), outName);
-        setStatus(pdf2jpgStatus, `Berhasil mengonversi ${pdf2jpgFiles.length} file PDF ke JPG!`, 'success');
+        clearPdf2JpgState();
+        setStatus(pdf2jpgStatus, `Berhasil mengonversi ${totalCount} file PDF ke JPG! Memori file otomatis dibersihkan.`, 'success');
       } catch {
-        setStatus(pdf2jpgStatus, 'Gagal mengonversi PDF ke JPG.', 'error');
-      } finally {
         pdf2jpgBtn.disabled = false;
+        setStatus(pdf2jpgStatus, 'Gagal mengonversi PDF ke JPG.', 'error');
       }
     });
 
-    // ================= 6. COMPRESS PDF (FAST BATCH) =================
+    // ================= 6. COMPRESS PDF (BATCH) =================
     let compressFiles = [];
     const compressList = document.getElementById('compress-list');
     const compressControls = document.getElementById('compress-controls');
@@ -1311,6 +1359,7 @@
         await Promise.all(
           pdfFiles.map(async (_, idx) => {
             const target = compressFiles[startIdx + idx];
+            if (!target) return;
             try {
               const { thumbUrl, pageCount } = await generatePdfThumbnail(target.bytes, 1);
               target.thumbUrl = thumbUrl;
@@ -1412,24 +1461,24 @@
           downloadBlob(await zip.generateAsync({ type: 'blob' }), 'compressed-pdfs.zip');
         }
 
+        clearCompressState();
         const ratio = (((totalBefore - totalAfter) / totalBefore) * 100).toFixed(1);
         if (totalAfter < totalBefore) {
           setStatus(
             compressStatus,
-            `Selesai! Total ukuran turun dari ${formatBytes(totalBefore)} menjadi ${formatBytes(totalAfter)} (hemat ${ratio}%).`,
+            `Selesai! Ukuran turun dari ${formatBytes(totalBefore)} menjadi ${formatBytes(totalAfter)} (hemat ${ratio}%). Memori otomatis dibersihkan.`,
             'success'
           );
         } else {
           setStatus(
             compressStatus,
-            `Selesai (${formatBytes(totalAfter)}). File asli sudah sangat terkompresi sehingga ukuran tidak berkurang lebih jauh.`,
+            `Selesai (${formatBytes(totalAfter)}). File asli sudah sangat terkompresi. Memori otomatis dibersihkan.`,
             'warning'
           );
         }
       } catch {
-        setStatus(compressStatus, 'Gagal mengompresi PDF.', 'error');
-      } finally {
         compressBtn.disabled = false;
+        setStatus(compressStatus, 'Gagal mengompresi PDF.', 'error');
       }
     });
   </script>
