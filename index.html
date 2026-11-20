@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PDFKit Local — All-in-One Client-Side PDF Tools</title>
-  <!-- Library PDF Manipulation & ZIP -->
+  <title>PDFKit Local — Visual Client-Side PDF Toolkit</title>
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <!-- Library PDF Rendering (PDF.js) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     :root {
@@ -43,7 +41,7 @@
 
     .container {
       width: 100%;
-      max-width: 820px;
+      max-width: 900px;
     }
 
     header {
@@ -144,7 +142,7 @@
     .dropzone {
       border: 2px dashed var(--border);
       border-radius: 12px;
-      padding: 2rem 1rem;
+      padding: 1.85rem 1rem;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
@@ -165,55 +163,93 @@
       font-size: 0.8rem;
     }
 
-    .file-list {
-      margin-top: 1.1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
+    /* GRID THUMBNAIL PREVIEW */
+    .preview-grid {
+      margin-top: 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 0.85rem;
     }
 
-    .file-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
+    .preview-card {
       background: var(--bg);
       border: 1px solid var(--border);
-      padding: 0.65rem 0.9rem;
-      border-radius: 8px;
+      border-radius: 10px;
+      padding: 0.65rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.2s;
     }
 
-    .file-info {
+    .preview-card:hover {
+      border-color: #475569;
+    }
+
+    .thumb-box {
+      width: 100%;
+      height: 195px;
+      background: #090d16;
+      border-radius: 6px;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.6rem;
+      position: relative;
     }
 
-    .file-name {
-      font-size: 0.88rem;
-      font-weight: 500;
+    .thumb-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      transition: transform 0.2s ease;
+    }
+
+    .thumb-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .card-name {
+      font-size: 0.8rem;
+      font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-bottom: 0.2rem;
     }
 
-    .file-meta {
-      font-size: 0.76rem;
+    .card-meta {
+      font-size: 0.72rem;
       color: var(--muted);
+      margin-bottom: 0.55rem;
     }
 
-    .file-actions {
+    .card-actions {
       display: flex;
-      gap: 0.35rem;
-      flex-shrink: 0;
+      gap: 0.3rem;
+      justify-content: space-between;
     }
 
     .icon-btn {
+      flex: 1;
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 0.32rem 0.58rem;
-      border-radius: 6px;
+      padding: 0.3rem 0.4rem;
+      border-radius: 5px;
       cursor: pointer;
-      font-size: 0.78rem;
+      font-size: 0.74rem;
+      text-align: center;
     }
 
     .icon-btn:hover:not(:disabled) {
@@ -221,13 +257,58 @@
     }
 
     .icon-btn:disabled {
-      opacity: 0.4;
+      opacity: 0.35;
       cursor: not-allowed;
     }
 
     .icon-btn.danger:hover {
       border-color: var(--danger);
       color: var(--danger);
+    }
+
+    /* SPLIT PAGE THUMBNAIL STRIP */
+    .split-pages-grid {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 0.65rem;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
+
+    .split-page-item {
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .split-page-item.selected {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .split-page-item img {
+      width: 100%;
+      height: 120px;
+      object-fit: contain;
+      background: #090d16;
+      border-radius: 4px;
+      margin-bottom: 0.35rem;
+    }
+
+    .split-page-item span {
+      font-size: 0.74rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .split-page-item.selected span {
+      color: var(--accent);
     }
 
     .controls-box {
@@ -321,8 +402,9 @@
 <body>
   <div class="container">
     <header>
-      <h1>Yakuzam <span>Pie</span></h1>
-        <div class="badge">100% Client-Side • File Tetap Aman di Perangkatmu</div>
+      <h1>PDFKit <span>Local</span></h1>
+      <p>Toolkit PDF dengan visual preview & pemrosesan batch langsung di browser.</p>
+      <div class="badge">100% Client-Side • Visual Preview • Multi-File Batch</div>
     </header>
 
     <div class="tabs">
@@ -337,13 +419,13 @@
     <!-- 1. MERGE PDF -->
     <div id="panel-merge" class="panel active">
       <div class="panel-title">Merge PDF</div>
-      <div class="panel-desc">Gabungkan beberapa file PDF menjadi satu dokumen berurutan.</div>
+      <div class="panel-desc">Lihat preview halaman depan tiap file dan atur urutannya sebelum digabung.</div>
       <div id="merge-dropzone" class="dropzone">
         <p><strong>Klik atau tarik beberapa file PDF ke sini</strong></p>
-        <small>Pilih banyak file sekaligus, lalu atur urutannya di bawah</small>
+        <small>Bisa pilih banyak file sekaligus</small>
         <input type="file" id="merge-input" accept="application/pdf" multiple hidden />
       </div>
-      <div id="merge-list" class="file-list"></div>
+      <div id="merge-list" class="preview-grid"></div>
       <button id="merge-btn" class="primary-btn" disabled>Gabungkan & Download PDF</button>
       <div id="merge-status" class="status"></div>
     </div>
@@ -351,13 +433,13 @@
     <!-- 2. SPLIT PDF -->
     <div id="panel-split" class="panel">
       <div class="panel-title">Split PDF</div>
-      <div class="panel-desc">Pisahkan setiap halaman menjadi file terpisah atau ekstrak halaman tertentu.</div>
+      <div class="panel-desc">Klik langsung thumbnail halaman yang ingin diekstrak, atau pecah semua halaman ke ZIP.</div>
       <div id="split-dropzone" class="dropzone">
         <p><strong>Klik atau tarik 1 file PDF ke sini</strong></p>
-        <small>Mendukung mode semua halaman (.ZIP) atau rentang halaman spesifik</small>
+        <small>Semua halaman akan ditampilkan sebagai preview visual di bawah</small>
         <input type="file" id="split-input" accept="application/pdf" hidden />
       </div>
-      <div id="split-file-info" class="file-list"></div>
+      <div id="split-file-header" class="preview-grid"></div>
       <div id="split-controls" class="controls-box" style="display: none;">
         <div class="radio-group">
           <label>
@@ -366,25 +448,26 @@
           </label>
           <label>
             <input type="radio" name="split-mode" value="range" />
-            Ekstrak halaman tertentu menjadi 1 file PDF baru
+            Ekstrak halaman tertentu (klik thumbnail halaman di bawah atau ketik nomornya)
           </label>
         </div>
         <input type="text" id="split-range" class="text-input" placeholder="Contoh: 1-3, 5, 8-10" disabled />
+        <div id="split-pages-grid" class="split-pages-grid"></div>
       </div>
       <button id="split-btn" class="primary-btn" disabled>Proses Split PDF</button>
       <div id="split-status" class="status"></div>
     </div>
 
-    <!-- 3. ROTATE PDF -->
+    <!-- 3. ROTATE PDF (BATCH) -->
     <div id="panel-rotate" class="panel">
-      <div class="panel-title">Rotate PDF</div>
-      <div class="panel-desc">Putar orientasi seluruh halaman dokumen PDF secara permanen.</div>
+      <div class="panel-title">Rotate PDF (Batch Multi-File)</div>
+      <div class="panel-desc">Putar satu atau banyak file PDF sekaligus dengan preview rotasi langsung.</div>
       <div id="rotate-dropzone" class="dropzone">
-        <p><strong>Klik atau tarik 1 file PDF ke sini</strong></p>
-        <small>Pilih sudut rotasi searah jarum jam setelah file dimuat</small>
-        <input type="file" id="rotate-input" accept="application/pdf" hidden />
+        <p><strong>Klik atau tarik satu / banyak file PDF ke sini</strong></p>
+        <small>Jika lebih dari 1 file, hasil otomatis dibungkus ke dalam .ZIP</small>
+        <input type="file" id="rotate-input" accept="application/pdf" multiple hidden />
       </div>
-      <div id="rotate-file-info" class="file-list"></div>
+      <div id="rotate-list" class="preview-grid"></div>
       <div id="rotate-controls" class="controls-box" style="display: none;">
         <label class="select-label" for="rotate-angle">Sudut Rotasi:</label>
         <select id="rotate-angle" class="select-input">
@@ -393,34 +476,34 @@
           <option value="270">270° Searah Jarum Jam (Kiri 90°)</option>
         </select>
       </div>
-      <button id="rotate-btn" class="primary-btn" disabled>Putar & Download PDF</button>
+      <button id="rotate-btn" class="primary-btn" disabled>Putar & Download</button>
       <div id="rotate-status" class="status"></div>
     </div>
 
     <!-- 4. JPG/PNG TO PDF -->
     <div id="panel-img2pdf" class="panel">
       <div class="panel-title">JPG / PNG to PDF</div>
-      <div class="panel-desc">Ubah satu atau banyak gambar (JPG/PNG) menjadi satu file PDF.</div>
+      <div class="panel-desc">Lihat preview setiap gambar dan atur posisinya sebelum dikonversi ke PDF.</div>
       <div id="img2pdf-dropzone" class="dropzone">
         <p><strong>Klik atau tarik file gambar (JPG / PNG) ke sini</strong></p>
-        <small>Ukuran halaman PDF otomatis menyesuaikan dimensi masing-masing gambar</small>
+        <small>Bisa pilih banyak gambar sekaligus</small>
         <input type="file" id="img2pdf-input" accept="image/jpeg,image/png" multiple hidden />
       </div>
-      <div id="img2pdf-list" class="file-list"></div>
+      <div id="img2pdf-list" class="preview-grid"></div>
       <button id="img2pdf-btn" class="primary-btn" disabled>Konversi ke PDF</button>
       <div id="img2pdf-status" class="status"></div>
     </div>
 
-    <!-- 5. PDF TO JPG -->
+    <!-- 5. PDF TO JPG (BATCH) -->
     <div id="panel-pdf2jpg" class="panel">
-      <div class="panel-title">PDF to JPG</div>
-      <div class="panel-desc">Render setiap halaman PDF menjadi gambar JPG resolusi tinggi dalam arsip ZIP.</div>
+      <div class="panel-title">PDF to JPG (Batch Multi-File)</div>
+      <div class="panel-desc">Ubah semua halaman dari satu atau banyak PDF menjadi gambar JPG dalam arsip ZIP.</div>
       <div id="pdf2jpg-dropzone" class="dropzone">
-        <p><strong>Klik atau tarik 1 file PDF ke sini</strong></p>
-        <small>Semua halaman akan dikonversi ke JPG dan dibungkus ke file .ZIP</small>
-        <input type="file" id="pdf2jpg-input" accept="application/pdf" hidden />
+        <p><strong>Klik atau tarik satu / banyak file PDF ke sini</strong></p>
+        <small>Setiap PDF dibuatkan folder terpisah di dalam ZIP jika lebih dari 1 file</small>
+        <input type="file" id="pdf2jpg-input" accept="application/pdf" multiple hidden />
       </div>
-      <div id="pdf2jpg-file-info" class="file-list"></div>
+      <div id="pdf2jpg-list" class="preview-grid"></div>
       <div id="pdf2jpg-controls" class="controls-box" style="display: none;">
         <label class="select-label" for="pdf2jpg-scale">Resolusi Output:</label>
         <select id="pdf2jpg-scale" class="select-input">
@@ -433,16 +516,16 @@
       <div id="pdf2jpg-status" class="status"></div>
     </div>
 
-    <!-- 6. COMPRESS PDF -->
+    <!-- 6. COMPRESS PDF (BATCH) -->
     <div id="panel-compress" class="panel">
-      <div class="panel-title">Compress PDF</div>
-      <div class="panel-desc">Perkecil ukuran file PDF dengan merender ulang halaman ke gambar terkompresi.</div>
+      <div class="panel-title">Compress PDF (Batch Multi-File)</div>
+      <div class="panel-desc">Perkecil ukuran satu atau banyak file PDF sekaligus langsung di browser.</div>
       <div id="compress-dropzone" class="dropzone">
-        <p><strong>Klik atau tarik 1 file PDF ke sini</strong></p>
-        <small>Cocok untuk PDF hasil scan atau dokumen berisi banyak gambar besar</small>
-        <input type="file" id="compress-input" accept="application/pdf" hidden />
+        <p><strong>Klik atau tarik satu / banyak file PDF ke sini</strong></p>
+        <small>Jika lebih dari 1 file, seluruh hasil kompresi otomatis digabung ke .ZIP</small>
+        <input type="file" id="compress-input" accept="application/pdf" multiple hidden />
       </div>
-      <div id="compress-file-info" class="file-list"></div>
+      <div id="compress-list" class="preview-grid"></div>
       <div id="compress-controls" class="controls-box" style="display: none;">
         <label class="select-label" for="compress-level">Tingkat Kompresi:</label>
         <select id="compress-level" class="select-input">
@@ -451,19 +534,18 @@
           <option value="0.35|0.9">Kompresi Ekstrem (Ukuran Paling Kecil)</option>
         </select>
       </div>
-      <button id="compress-btn" class="primary-btn" disabled>Kompres & Download PDF</button>
+      <button id="compress-btn" class="primary-btn" disabled>Kompres & Download</button>
       <div id="compress-status" class="status"></div>
     </div>
 
     <div class="note-box">
-      <strong>Catatan Teknis:</strong> Seluruh fitur di atas berjalan 100% di memori browser lokal (tanpa upload ke server). Fitur konversi dokumen berbasis layout kompleks seperti <em>PDF to Word (.docx)</em> dan <em>Word to PDF</em> memerlukan engine server/backend terpisah agar tata letak tabel & font tidak berantakan.
+      <strong>Catatan Teknis:</strong> Semua preview thumbnail, penggabungan, rotasi, dan kompresi berjalan 100% di memori browser lokal tanpa pengiriman data ke server luar.
     </div>
   </div>
 
   <script>
     const { PDFDocument, degrees } = PDFLib;
 
-    // Konfigurasi Worker PDF.js
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -520,6 +602,28 @@
       });
     }
 
+    // Render thumbnail halaman 1 PDF menjadi DataURL
+    async function generatePdfThumbnail(arrayBuffer, pageNumber = 1, targetWidth = 260) {
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+      const page = await pdf.getPage(pageNumber);
+      const unscaledViewport = page.getViewport({ scale: 1 });
+      const scale = targetWidth / unscaledViewport.width;
+      const viewport = page.getViewport({ scale });
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      return {
+        thumbUrl: canvas.toDataURL('image/jpeg', 0.8),
+        pageCount: pdf.numPages,
+      };
+    }
+
     // ================= 1. MERGE PDF =================
     let mergeFiles = [];
     const mergeList = document.getElementById('merge-list');
@@ -530,13 +634,14 @@
       document.getElementById('merge-dropzone'),
       document.getElementById('merge-input'),
       async (fileList) => {
-        setStatus(mergeStatus, 'Membaca file PDF...');
+        setStatus(mergeStatus, 'Membuat preview PDF...');
         for (const file of fileList) {
           if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) continue;
           try {
             const bytes = await file.arrayBuffer();
-            const pdf = await PDFDocument.load(bytes);
-            mergeFiles.push({ name: file.name, bytes, pageCount: pdf.getPageCount() });
+            await PDFDocument.load(bytes);
+            const { thumbUrl, pageCount } = await generatePdfThumbnail(bytes, 1);
+            mergeFiles.push({ name: file.name, bytes, pageCount, thumbUrl, size: file.size });
           } catch {
             setStatus(mergeStatus, `Gagal membaca "${file.name}" (pastikan tidak terenkripsi).`, 'error');
           }
@@ -549,20 +654,24 @@
     function renderMergeList() {
       mergeList.innerHTML = '';
       mergeFiles.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'file-item';
-        div.innerHTML = `
-          <div class="file-info">
-            <div class="file-name">${index + 1}. ${item.name}</div>
-            <div class="file-meta">${item.pageCount} halaman</div>
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+        card.innerHTML = `
+          <div>
+            <div class="thumb-box">
+              <span class="thumb-badge">#${index + 1}</span>
+              <img src="${item.thumbUrl}" alt="${item.name}" />
+            </div>
+            <div class="card-name" title="${item.name}">${item.name}</div>
+            <div class="card-meta">${item.pageCount} hal • ${formatBytes(item.size)}</div>
           </div>
-          <div class="file-actions">
-            <button class="icon-btn" onclick="moveMergeFile(${index}, -1)" ${index === 0 ? 'disabled' : ''}>Naik</button>
-            <button class="icon-btn" onclick="moveMergeFile(${index}, 1)" ${index === mergeFiles.length - 1 ? 'disabled' : ''}>Turun</button>
+          <div class="card-actions">
+            <button class="icon-btn" onclick="moveMergeFile(${index}, -1)" ${index === 0 ? 'disabled' : ''}>◀</button>
+            <button class="icon-btn" onclick="moveMergeFile(${index}, 1)" ${index === mergeFiles.length - 1 ? 'disabled' : ''}>▶</button>
             <button class="icon-btn danger" onclick="removeMergeFile(${index})">Hapus</button>
           </div>
         `;
-        mergeList.appendChild(div);
+        mergeList.appendChild(card);
       });
       mergeBtn.disabled = mergeFiles.length < 2;
     }
@@ -590,8 +699,7 @@
           const copiedPages = await mergedPdf.copyPages(srcPdf, srcPdf.getPageIndices());
           copiedPages.forEach((page) => mergedPdf.addPage(page));
         }
-        const savedBytes = await mergedPdf.save();
-        downloadBlob(new Blob([savedBytes], { type: 'application/pdf' }), 'merged.pdf');
+        downloadBlob(new Blob([await mergedPdf.save()], { type: 'application/pdf' }), 'merged.pdf');
         setStatus(mergeStatus, `Berhasil menggabungkan ${mergeFiles.length} file!`, 'success');
       } catch {
         setStatus(mergeStatus, 'Terjadi kesalahan saat menggabungkan PDF.', 'error');
@@ -600,17 +708,20 @@
       }
     });
 
-    // ================= 2. SPLIT PDF =================
+    // ================= 2. SPLIT PDF (VISUAL PAGE PICKER) =================
     let splitFile = null;
-    const splitFileInfo = document.getElementById('split-file-info');
+    let selectedSplitPages = new Set();
+    const splitFileHeader = document.getElementById('split-file-header');
     const splitControls = document.getElementById('split-controls');
     const splitRangeInput = document.getElementById('split-range');
+    const splitPagesGrid = document.getElementById('split-pages-grid');
     const splitBtn = document.getElementById('split-btn');
     const splitStatus = document.getElementById('split-status');
 
     document.querySelectorAll('input[name="split-mode"]').forEach((radio) => {
       radio.addEventListener('change', (e) => {
-        splitRangeInput.disabled = e.target.value !== 'range';
+        const isRange = e.target.value === 'range';
+        splitRangeInput.disabled = !isRange;
       });
     });
 
@@ -623,20 +734,40 @@
           setStatus(splitStatus, 'Pilih file berformat PDF.', 'error');
           return;
         }
-        setStatus(splitStatus, 'Memuat file PDF...');
+        setStatus(splitStatus, 'Merender preview semua halaman...');
         try {
           const bytes = await file.arrayBuffer();
-          const pdf = await PDFDocument.load(bytes);
-          splitFile = { name: file.name, bytes, pageCount: pdf.getPageCount() };
-          splitFileInfo.innerHTML = `
-            <div class="file-item">
-              <div class="file-info">
-                <div class="file-name">${splitFile.name}</div>
-                <div class="file-meta">Total ${splitFile.pageCount} halaman</div>
-              </div>
-              <button class="icon-btn danger" onclick="clearSplitFile()">Hapus</button>
-            </div>
-          `;
+          await PDFDocument.load(bytes);
+          const pdf = await pdfjsLib.getDocument({ data: bytes.slice(0) }).promise;
+          splitFile = { name: file.name, bytes, pageCount: pdf.numPages, size: file.size };
+          selectedSplitPages.clear();
+          splitRangeInput.value = '';
+
+          splitPagesGrid.innerHTML = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const { thumbUrl } = await generatePdfThumbnail(bytes, i, 150);
+            if (i === 1) {
+              splitFileHeader.innerHTML = `
+                <div class="preview-card">
+                  <div>
+                    <div class="thumb-box"><img src="${thumbUrl}" alt="${file.name}" /></div>
+                    <div class="card-name" title="${file.name}">${file.name}</div>
+                    <div class="card-meta">${pdf.numPages} halaman • ${formatBytes(file.size)}</div>
+                  </div>
+                  <div class="card-actions">
+                    <button class="icon-btn danger" onclick="clearSplitFile()">Hapus File</button>
+                  </div>
+                </div>
+              `;
+            }
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'split-page-item';
+            pageDiv.dataset.page = i;
+            pageDiv.innerHTML = `<img src="${thumbUrl}" alt="Hal ${i}" /><span>Halaman ${i}</span>`;
+            pageDiv.addEventListener('click', () => toggleSplitPage(i, pageDiv));
+            splitPagesGrid.appendChild(pageDiv);
+          }
+
           splitControls.style.display = 'flex';
           splitBtn.disabled = false;
           setStatus(splitStatus, '');
@@ -646,9 +777,29 @@
       }
     );
 
+    function toggleSplitPage(pageNum, el) {
+      // Otomatis pindah ke mode range jika user klik halaman langsung
+      const rangeRadio = document.querySelector('input[name="split-mode"][value="range"]');
+      rangeRadio.checked = true;
+      splitRangeInput.disabled = false;
+
+      if (selectedSplitPages.has(pageNum)) {
+        selectedSplitPages.delete(pageNum);
+        el.classList.remove('selected');
+      } else {
+        selectedSplitPages.add(pageNum);
+        el.classList.add('selected');
+      }
+      splitRangeInput.value = Array.from(selectedSplitPages)
+        .sort((a, b) => a - b)
+        .join(', ');
+    }
+
     window.clearSplitFile = () => {
       splitFile = null;
-      splitFileInfo.innerHTML = '';
+      selectedSplitPages.clear();
+      splitFileHeader.innerHTML = '';
+      splitPagesGrid.innerHTML = '';
       splitControls.style.display = 'none';
       splitBtn.disabled = true;
       setStatus(splitStatus, '');
@@ -657,7 +808,7 @@
     function parsePageRanges(input, maxPages) {
       const pages = new Set();
       const parts = input.split(',').map((s) => s.trim()).filter(Boolean);
-      if (parts.length === 0) throw new Error('Masukkan nomor halaman.');
+      if (parts.length === 0) throw new Error('Pilih halaman di preview atau masukkan nomor halaman.');
       for (const part of parts) {
         if (part.includes('-')) {
           const [startStr, endStr] = part.split('-').map((s) => s.trim());
@@ -694,8 +845,7 @@
             newPdf.addPage(copiedPage);
             zip.file(`page-${i + 1}.pdf`, await newPdf.save());
           }
-          const zipBlob = await zip.generateAsync({ type: 'blob' });
-          downloadBlob(zipBlob, 'split-pages.zip');
+          downloadBlob(await zip.generateAsync({ type: 'blob' }), 'split-pages.zip');
           setStatus(splitStatus, `Berhasil memisahkan ${total} halaman ke ZIP!`, 'success');
         } else {
           const indices = parsePageRanges(splitRangeInput.value, splitFile.pageCount);
@@ -712,66 +862,92 @@
       }
     });
 
-    // ================= 3. ROTATE PDF =================
-    let rotateFile = null;
-    const rotateFileInfo = document.getElementById('rotate-file-info');
+    // ================= 3. ROTATE PDF (BATCH) =================
+    let rotateFiles = [];
+    const rotateList = document.getElementById('rotate-list');
     const rotateControls = document.getElementById('rotate-controls');
+    const rotateAngleSelect = document.getElementById('rotate-angle');
     const rotateBtn = document.getElementById('rotate-btn');
     const rotateStatus = document.getElementById('rotate-status');
+
+    rotateAngleSelect.addEventListener('change', renderRotateList);
 
     setupDropzone(
       document.getElementById('rotate-dropzone'),
       document.getElementById('rotate-input'),
-      async (files) => {
-        const file = files[0];
-        if (!file || (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf'))) {
-          setStatus(rotateStatus, 'Pilih file berformat PDF.', 'error');
-          return;
+      async (fileList) => {
+        setStatus(rotateStatus, 'Membuat preview PDF...');
+        for (const file of fileList) {
+          if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) continue;
+          try {
+            const bytes = await file.arrayBuffer();
+            await PDFDocument.load(bytes);
+            const { thumbUrl, pageCount } = await generatePdfThumbnail(bytes, 1);
+            rotateFiles.push({ name: file.name, bytes, pageCount, thumbUrl });
+          } catch {
+            setStatus(rotateStatus, `Gagal membaca "${file.name}".`, 'error');
+          }
         }
-        try {
-          const bytes = await file.arrayBuffer();
-          const pdf = await PDFDocument.load(bytes);
-          rotateFile = { name: file.name, bytes, pageCount: pdf.getPageCount() };
-          rotateFileInfo.innerHTML = `
-            <div class="file-item">
-              <div class="file-info">
-                <div class="file-name">${rotateFile.name}</div>
-                <div class="file-meta">${rotateFile.pageCount} halaman</div>
-              </div>
-              <button class="icon-btn danger" onclick="clearRotateFile()">Hapus</button>
-            </div>
-          `;
-          rotateControls.style.display = 'flex';
-          rotateBtn.disabled = false;
-          setStatus(rotateStatus, '');
-        } catch {
-          setStatus(rotateStatus, 'Gagal membaca PDF.', 'error');
-        }
+        renderRotateList();
+        setStatus(rotateStatus, '');
       }
     );
 
-    window.clearRotateFile = () => {
-      rotateFile = null;
-      rotateFileInfo.innerHTML = '';
-      rotateControls.style.display = 'none';
-      rotateBtn.disabled = true;
-      setStatus(rotateStatus, '');
+    function renderRotateList() {
+      const angle = Number(rotateAngleSelect.value);
+      rotateList.innerHTML = '';
+      rotateFiles.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+        card.innerHTML = `
+          <div>
+            <div class="thumb-box">
+              <span class="thumb-badge">${angle}°</span>
+              <img src="${item.thumbUrl}" style="transform: rotate(${angle}deg);" alt="${item.name}" />
+            </div>
+            <div class="card-name" title="${item.name}">${item.name}</div>
+            <div class="card-meta">${item.pageCount} halaman</div>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn danger" onclick="removeRotateFile(${index})">Hapus</button>
+          </div>
+        `;
+        rotateList.appendChild(card);
+      });
+      rotateControls.style.display = rotateFiles.length ? 'flex' : 'none';
+      rotateBtn.disabled = rotateFiles.length === 0;
+    }
+
+    window.removeRotateFile = (index) => {
+      rotateFiles.splice(index, 1);
+      renderRotateList();
     };
 
     rotateBtn.addEventListener('click', async () => {
-      if (!rotateFile) return;
+      if (!rotateFiles.length) return;
       rotateBtn.disabled = true;
+      const angle = Number(rotateAngleSelect.value);
       setStatus(rotateStatus, 'Memutar halaman PDF...');
       try {
-        const angle = Number(document.getElementById('rotate-angle').value);
-        const pdf = await PDFDocument.load(rotateFile.bytes);
-        pdf.getPages().forEach((page) => {
-          const currentRotation = page.getRotation().angle;
-          page.setRotation(degrees((currentRotation + angle) % 360));
-        });
-        const savedBytes = await pdf.save();
-        downloadBlob(new Blob([savedBytes], { type: 'application/pdf' }), `rotated-${rotateFile.name}`);
-        setStatus(rotateStatus, `Berhasil memutar semua halaman sebesar ${angle}°!`, 'success');
+        if (rotateFiles.length === 1) {
+          const item = rotateFiles[0];
+          const pdf = await PDFDocument.load(item.bytes);
+          pdf.getPages().forEach((page) => {
+            page.setRotation(degrees((page.getRotation().angle + angle) % 360));
+          });
+          downloadBlob(new Blob([await pdf.save()], { type: 'application/pdf' }), `rotated-${item.name}`);
+        } else {
+          const zip = new JSZip();
+          for (const item of rotateFiles) {
+            const pdf = await PDFDocument.load(item.bytes);
+            pdf.getPages().forEach((page) => {
+              page.setRotation(degrees((page.getRotation().angle + angle) % 360));
+            });
+            zip.file(`rotated-${item.name}`, await pdf.save());
+          }
+          downloadBlob(await zip.generateAsync({ type: 'blob' }), 'rotated-pdfs.zip');
+        }
+        setStatus(rotateStatus, `Berhasil memutar ${rotateFiles.length} file PDF!`, 'success');
       } catch {
         setStatus(rotateStatus, 'Gagal memutar PDF.', 'error');
       } finally {
@@ -792,7 +968,8 @@
         for (const file of fileList) {
           if (!['image/jpeg', 'image/png'].includes(file.type)) continue;
           const bytes = await file.arrayBuffer();
-          imageFiles.push({ name: file.name, type: file.type, bytes, size: file.size });
+          const previewUrl = URL.createObjectURL(file);
+          imageFiles.push({ name: file.name, type: file.type, bytes, size: file.size, previewUrl });
         }
         renderImg2PdfList();
         setStatus(img2pdfStatus, '');
@@ -802,20 +979,24 @@
     function renderImg2PdfList() {
       img2pdfList.innerHTML = '';
       imageFiles.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'file-item';
-        div.innerHTML = `
-          <div class="file-info">
-            <div class="file-name">${index + 1}. ${item.name}</div>
-            <div class="file-meta">${formatBytes(item.size)}</div>
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+        card.innerHTML = `
+          <div>
+            <div class="thumb-box">
+              <span class="thumb-badge">#${index + 1}</span>
+              <img src="${item.previewUrl}" alt="${item.name}" />
+            </div>
+            <div class="card-name" title="${item.name}">${item.name}</div>
+            <div class="card-meta">${formatBytes(item.size)}</div>
           </div>
-          <div class="file-actions">
-            <button class="icon-btn" onclick="moveImgFile(${index}, -1)" ${index === 0 ? 'disabled' : ''}>Naik</button>
-            <button class="icon-btn" onclick="moveImgFile(${index}, 1)" ${index === imageFiles.length - 1 ? 'disabled' : ''}>Turun</button>
+          <div class="card-actions">
+            <button class="icon-btn" onclick="moveImgFile(${index}, -1)" ${index === 0 ? 'disabled' : ''}>◀</button>
+            <button class="icon-btn" onclick="moveImgFile(${index}, 1)" ${index === imageFiles.length - 1 ? 'disabled' : ''}>▶</button>
             <button class="icon-btn danger" onclick="removeImgFile(${index})">Hapus</button>
           </div>
         `;
-        img2pdfList.appendChild(div);
+        img2pdfList.appendChild(card);
       });
       img2pdfBtn.disabled = imageFiles.length === 0;
     }
@@ -828,12 +1009,13 @@
     };
 
     window.removeImgFile = (index) => {
+      URL.revokeObjectURL(imageFiles[index].previewUrl);
       imageFiles.splice(index, 1);
       renderImg2PdfList();
     };
 
     img2pdfBtn.addEventListener('click', async () => {
-      if (imageFiles.length === 0) return;
+      if (!imageFiles.length) return;
       img2pdfBtn.disabled = true;
       setStatus(img2pdfStatus, 'Membuat dokumen PDF dari gambar...');
       try {
@@ -844,26 +1026,20 @@
               ? await pdfDoc.embedPng(item.bytes)
               : await pdfDoc.embedJpg(item.bytes);
           const page = pdfDoc.addPage([embeddedImg.width, embeddedImg.height]);
-          page.drawImage(embeddedImg, {
-            x: 0,
-            y: 0,
-            width: embeddedImg.width,
-            height: embeddedImg.height,
-          });
+          page.drawImage(embeddedImg, { x: 0, y: 0, width: embeddedImg.width, height: embeddedImg.height });
         }
-        const savedBytes = await pdfDoc.save();
-        downloadBlob(new Blob([savedBytes], { type: 'application/pdf' }), 'images-to-pdf.pdf');
+        downloadBlob(new Blob([await pdfDoc.save()], { type: 'application/pdf' }), 'images-to-pdf.pdf');
         setStatus(img2pdfStatus, `Berhasil mengonversi ${imageFiles.length} gambar ke PDF!`, 'success');
       } catch {
-        setStatus(img2pdfStatus, 'Gagal mengonversi gambar (pastikan format JPG/PNG valid).', 'error');
+        setStatus(img2pdfStatus, 'Gagal mengonversi gambar.', 'error');
       } finally {
-        img2pdfBtn.disabled = imageFiles.length === 0;
+        img2pdfBtn.disabled = false;
       }
     });
 
-    // ================= 5. PDF TO JPG =================
-    let pdf2jpgFile = null;
-    const pdf2jpgFileInfo = document.getElementById('pdf2jpg-file-info');
+    // ================= 5. PDF TO JPG (BATCH) =================
+    let pdf2jpgFiles = [];
+    const pdf2jpgList = document.getElementById('pdf2jpg-list');
     const pdf2jpgControls = document.getElementById('pdf2jpg-controls');
     const pdf2jpgBtn = document.getElementById('pdf2jpg-btn');
     const pdf2jpgStatus = document.getElementById('pdf2jpg-status');
@@ -871,71 +1047,85 @@
     setupDropzone(
       document.getElementById('pdf2jpg-dropzone'),
       document.getElementById('pdf2jpg-input'),
-      async (files) => {
-        const file = files[0];
-        if (!file || (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf'))) {
-          setStatus(pdf2jpgStatus, 'Pilih file berformat PDF.', 'error');
-          return;
+      async (fileList) => {
+        setStatus(pdf2jpgStatus, 'Membuat preview PDF...');
+        for (const file of fileList) {
+          if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) continue;
+          try {
+            const bytes = await file.arrayBuffer();
+            const { thumbUrl, pageCount } = await generatePdfThumbnail(bytes, 1);
+            pdf2jpgFiles.push({ name: file.name, bytes, pageCount, thumbUrl });
+          } catch {
+            setStatus(pdf2jpgStatus, `Gagal membaca "${file.name}".`, 'error');
+          }
         }
-        try {
-          const bytes = await file.arrayBuffer();
-          const loadingTask = pdfjsLib.getDocument({ data: bytes.slice(0) });
-          const pdf = await loadingTask.promise;
-          pdf2jpgFile = { name: file.name, bytes, pageCount: pdf.numPages };
-          pdf2jpgFileInfo.innerHTML = `
-            <div class="file-item">
-              <div class="file-info">
-                <div class="file-name">${pdf2jpgFile.name}</div>
-                <div class="file-meta">${pdf2jpgFile.pageCount} halaman siap dirender</div>
-              </div>
-              <button class="icon-btn danger" onclick="clearPdf2JpgFile()">Hapus</button>
-            </div>
-          `;
-          pdf2jpgControls.style.display = 'flex';
-          pdf2jpgBtn.disabled = false;
-          setStatus(pdf2jpgStatus, '');
-        } catch {
-          setStatus(pdf2jpgStatus, 'Gagal memuat PDF untuk dirender.', 'error');
-        }
+        renderPdf2JpgList();
+        setStatus(pdf2jpgStatus, '');
       }
     );
 
-    window.clearPdf2JpgFile = () => {
-      pdf2jpgFile = null;
-      pdf2jpgFileInfo.innerHTML = '';
-      pdf2jpgControls.style.display = 'none';
-      pdf2jpgBtn.disabled = true;
-      setStatus(pdf2jpgStatus, '');
+    function renderPdf2JpgList() {
+      pdf2jpgList.innerHTML = '';
+      pdf2jpgFiles.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+        card.innerHTML = `
+          <div>
+            <div class="thumb-box"><img src="${item.thumbUrl}" alt="${item.name}" /></div>
+            <div class="card-name" title="${item.name}">${item.name}</div>
+            <div class="card-meta">${item.pageCount} halaman</div>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn danger" onclick="removePdf2JpgFile(${index})">Hapus</button>
+          </div>
+        `;
+        pdf2jpgList.appendChild(card);
+      });
+      pdf2jpgControls.style.display = pdf2jpgFiles.length ? 'flex' : 'none';
+      pdf2jpgBtn.disabled = pdf2jpgFiles.length === 0;
+    }
+
+    window.removePdf2JpgFile = (index) => {
+      pdf2jpgFiles.splice(index, 1);
+      renderPdf2JpgList();
     };
 
     pdf2jpgBtn.addEventListener('click', async () => {
-      if (!pdf2jpgFile) return;
+      if (!pdf2jpgFiles.length) return;
       pdf2jpgBtn.disabled = true;
       const scale = Number(document.getElementById('pdf2jpg-scale').value);
       try {
         const zip = new JSZip();
-        const pdf = await pdfjsLib.getDocument({ data: pdf2jpgFile.bytes.slice(0) }).promise;
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
 
-        for (let i = 1; i <= pdf.numPages; i++) {
-          setStatus(pdf2jpgStatus, `Merender halaman ${i} dari ${pdf.numPages}...`);
-          const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale });
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        for (let f = 0; f < pdf2jpgFiles.length; f++) {
+          const item = pdf2jpgFiles[f];
+          const baseName = item.name.replace(/\.pdf$/i, '');
+          const folder = pdf2jpgFiles.length > 1 ? zip.folder(baseName) : zip;
+          const pdf = await pdfjsLib.getDocument({ data: item.bytes.slice(0) }).promise;
 
-          await page.render({ canvasContext: ctx, viewport }).promise;
-          const jpgBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
-          zip.file(`page-${i}.jpg`, jpgBlob);
+          for (let i = 1; i <= pdf.numPages; i++) {
+            setStatus(pdf2jpgStatus, `Merender ${item.name} (hal ${i}/${pdf.numPages})...`);
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale });
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            const jpgBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+            folder.file(`${baseName}-page-${i}.jpg`, jpgBlob);
+          }
         }
 
         setStatus(pdf2jpgStatus, 'Membungkus gambar ke dalam file ZIP...');
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        downloadBlob(zipBlob, `${pdf2jpgFile.name.replace(/\.pdf$/i, '')}-images.zip`);
-        setStatus(pdf2jpgStatus, `Berhasil mengonversi ${pdf.numPages} halaman ke JPG!`, 'success');
+        const outName = pdf2jpgFiles.length === 1
+          ? `${pdf2jpgFiles[0].name.replace(/\.pdf$/i, '')}-images.zip`
+          : 'batch-pdf-images.zip';
+        downloadBlob(await zip.generateAsync({ type: 'blob' }), outName);
+        setStatus(pdf2jpgStatus, `Berhasil mengonversi ${pdf2jpgFiles.length} file PDF ke JPG!`, 'success');
       } catch {
         setStatus(pdf2jpgStatus, 'Gagal mengonversi PDF ke JPG.', 'error');
       } finally {
@@ -943,9 +1133,9 @@
       }
     });
 
-    // ================= 6. COMPRESS PDF =================
-    let compressFile = null;
-    const compressFileInfo = document.getElementById('compress-file-info');
+    // ================= 6. COMPRESS PDF (BATCH) =================
+    let compressFiles = [];
+    const compressList = document.getElementById('compress-list');
     const compressControls = document.getElementById('compress-controls');
     const compressBtn = document.getElementById('compress-btn');
     const compressStatus = document.getElementById('compress-status');
@@ -953,97 +1143,118 @@
     setupDropzone(
       document.getElementById('compress-dropzone'),
       document.getElementById('compress-input'),
-      async (files) => {
-        const file = files[0];
-        if (!file || (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf'))) {
-          setStatus(compressStatus, 'Pilih file berformat PDF.', 'error');
-          return;
+      async (fileList) => {
+        setStatus(compressStatus, 'Membuat preview PDF...');
+        for (const file of fileList) {
+          if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) continue;
+          try {
+            const bytes = await file.arrayBuffer();
+            const { thumbUrl, pageCount } = await generatePdfThumbnail(bytes, 1);
+            compressFiles.push({ name: file.name, bytes, size: file.size, pageCount, thumbUrl });
+          } catch {
+            setStatus(compressStatus, `Gagal membaca "${file.name}".`, 'error');
+          }
         }
-        try {
-          const bytes = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: bytes.slice(0) }).promise;
-          compressFile = { name: file.name, bytes, size: file.size, pageCount: pdf.numPages };
-          compressFileInfo.innerHTML = `
-            <div class="file-item">
-              <div class="file-info">
-                <div class="file-name">${compressFile.name}</div>
-                <div class="file-meta">Ukuran awal: ${formatBytes(compressFile.size)} • ${compressFile.pageCount} halaman</div>
-              </div>
-              <button class="icon-btn danger" onclick="clearCompressFile()">Hapus</button>
-            </div>
-          `;
-          compressControls.style.display = 'flex';
-          compressBtn.disabled = false;
-          setStatus(compressStatus, '');
-        } catch {
-          setStatus(compressStatus, 'Gagal memuat PDF.', 'error');
-        }
+        renderCompressList();
+        setStatus(compressStatus, '');
       }
     );
 
-    window.clearCompressFile = () => {
-      compressFile = null;
-      compressFileInfo.innerHTML = '';
-      compressControls.style.display = 'none';
-      compressBtn.disabled = true;
-      setStatus(compressStatus, '');
+    function renderCompressList() {
+      compressList.innerHTML = '';
+      compressFiles.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+        card.innerHTML = `
+          <div>
+            <div class="thumb-box"><img src="${item.thumbUrl}" alt="${item.name}" /></div>
+            <div class="card-name" title="${item.name}">${item.name}</div>
+            <div class="card-meta">${formatBytes(item.size)} • ${item.pageCount} hal</div>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn danger" onclick="removeCompressFile(${index})">Hapus</button>
+          </div>
+        `;
+        compressList.appendChild(card);
+      });
+      compressControls.style.display = compressFiles.length ? 'flex' : 'none';
+      compressBtn.disabled = compressFiles.length === 0;
+    }
+
+    window.removeCompressFile = (index) => {
+      compressFiles.splice(index, 1);
+      renderCompressList();
     };
 
+    async function compressSinglePdf(item, quality, scale, onProgress) {
+      const srcPdf = await pdfjsLib.getDocument({ data: item.bytes.slice(0) }).promise;
+      const outPdf = await PDFDocument.create();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      for (let i = 1; i <= srcPdf.numPages; i++) {
+        onProgress(i, srcPdf.numPages);
+        const page = await srcPdf.getPage(i);
+        const viewport = page.getViewport({ scale });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const jpgDataUrl = canvas.toDataURL('image/jpeg', quality);
+        const jpgBytes = await fetch(jpgDataUrl).then((res) => res.arrayBuffer());
+        const embeddedJpg = await outPdf.embedJpg(jpgBytes);
+
+        const newPage = outPdf.addPage([viewport.width, viewport.height]);
+        newPage.drawImage(embeddedJpg, { x: 0, y: 0, width: viewport.width, height: viewport.height });
+      }
+      return await outPdf.save();
+    }
+
     compressBtn.addEventListener('click', async () => {
-      if (!compressFile) return;
+      if (!compressFiles.length) return;
       compressBtn.disabled = true;
       const [qualityStr, scaleStr] = document.getElementById('compress-level').value.split('|');
       const quality = Number(qualityStr);
       const scale = Number(scaleStr);
 
       try {
-        const srcPdf = await pdfjsLib.getDocument({ data: compressFile.bytes.slice(0) }).promise;
-        const outPdf = await PDFDocument.create();
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        let totalBefore = 0;
+        let totalAfter = 0;
 
-        for (let i = 1; i <= srcPdf.numPages; i++) {
-          setStatus(compressStatus, `Mengompresi halaman ${i} dari ${srcPdf.numPages}...`);
-          const page = await srcPdf.getPage(i);
-          const viewport = page.getViewport({ scale });
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          await page.render({ canvasContext: ctx, viewport }).promise;
-          const jpgDataUrl = canvas.toDataURL('image/jpeg', quality);
-          const jpgBytes = await fetch(jpgDataUrl).then((res) => res.arrayBuffer());
-          const embeddedJpg = await outPdf.embedJpg(jpgBytes);
-
-          const newPage = outPdf.addPage([viewport.width, viewport.height]);
-          newPage.drawImage(embeddedJpg, {
-            x: 0,
-            y: 0,
-            width: viewport.width,
-            height: viewport.height,
+        if (compressFiles.length === 1) {
+          const item = compressFiles[0];
+          totalBefore = item.size;
+          const compressedBytes = await compressSinglePdf(item, quality, scale, (cur, tot) => {
+            setStatus(compressStatus, `Mengompresi ${item.name} (hal ${cur}/${tot})...`);
           });
+          totalAfter = compressedBytes.byteLength;
+          downloadBlob(new Blob([compressedBytes], { type: 'application/pdf' }), `compressed-${item.name}`);
+        } else {
+          const zip = new JSZip();
+          for (const item of compressFiles) {
+            totalBefore += item.size;
+            const compressedBytes = await compressSinglePdf(item, quality, scale, (cur, tot) => {
+              setStatus(compressStatus, `Mengompresi ${item.name} (hal ${cur}/${tot})...`);
+            });
+            totalAfter += compressedBytes.byteLength;
+            zip.file(`compressed-${item.name}`, compressedBytes);
+          }
+          downloadBlob(await zip.generateAsync({ type: 'blob' }), 'compressed-pdfs.zip');
         }
 
-        const compressedBytes = await outPdf.save();
-        const savedSize = compressedBytes.byteLength;
-        const ratio = (((compressFile.size - savedSize) / compressFile.size) * 100).toFixed(1);
-
-        downloadBlob(
-          new Blob([compressedBytes], { type: 'application/pdf' }),
-          `compressed-${compressFile.name}`
-        );
-
-        if (savedSize < compressFile.size) {
+        const ratio = (((totalBefore - totalAfter) / totalBefore) * 100).toFixed(1);
+        if (totalAfter < totalBefore) {
           setStatus(
             compressStatus,
-            `Selesai! Ukuran turun dari ${formatBytes(compressFile.size)} menjadi ${formatBytes(savedSize)} (hemat ${ratio}%).`,
+            `Selesai! Total ukuran turun dari ${formatBytes(totalBefore)} menjadi ${formatBytes(totalAfter)} (hemat ${ratio}%).`,
             'success'
           );
         } else {
           setStatus(
             compressStatus,
-            `Selesai (${formatBytes(savedSize)}). File asli sudah sangat terkompresi sehingga ukuran tidak berkurang lebih jauh.`,
+            `Selesai (${formatBytes(totalAfter)}). File asli sudah sangat terkompresi sehingga ukuran tidak berkurang lebih jauh.`,
             'warning'
           );
         }
